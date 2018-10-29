@@ -73,7 +73,7 @@ sap.ui.define([
                     	// check if a data type exists (which may have validation constraints)
                         && oControl.getBinding(aValidateProperties[i]).getType() 
                         ) {
-                	try { oControl.getProperty("editable"); }
+                	try { editable = oControl.getProperty("editable"); }
                 	catch (ex) { editable = true; }
                     
                     if(editable) {
@@ -103,39 +103,46 @@ sap.ui.define([
 	                    isValidatedControl = true;
                     }
 
-                } else if (oControl.getRequired 
-                        && oControl.getRequired() === true ) {
-                    try {
-                        oControlBinding = oControl.getBinding(aValidateProperties[i]);
-                        oExternalValue = oControl.getProperty(aValidateProperties[i]);
-                        
-                        if (!oExternalValue || oExternalValue==="") {
-                            this._isValid = false;
-                            var oMessage = "Please fill this mandatory field!";
-                            oControl.setValueState(ValueState.Error, oMessage);
-                            
-                            sap.ui.getCore().getMessageManager().addMessages(
-                                new Message({
-                                    message: oMessage,
-                                    type: MessageType.Error,
-                                    target : ( oControlBinding.getContext() ? oControlBinding.getContext().getPath() + "/" : "") +
-                                    oControlBinding.getPath(),
-                                    processor: oControl.getBinding(aValidateProperties[i]).getModel()
-                                })
-                            );
-                        } else if (oControl.getAggregation("picker") 
-                                && oControl.getProperty("selectedKey").length === 0 ) { // might be a select 
-                            this._isValid = false;
-                            //TODO: i18n this
-                            oControl.setValueState(ValueState.Error, "Please choose an entry!");
-                        } else {
-                            oControl.setValueState(ValueState.None);
-                        }
-                    } catch (ex) {
-                        // Validation failed
-                    }
                 } else {
                     //oControl.setValueState(ValueState.None);
+                }
+            }
+            
+            if ( !isValidatedControl && // not validated through iterative approach
+                oControl.getRequired 
+                    && oControl.getRequired() === true 
+                    && oControl.getEditable
+                    && oControl.getEditable() === true
+                    && oControl.getEnabled
+                    && oControl.getEnabled() === true) {
+                try {
+                    oControlBinding = oControl.getBinding("value");
+                    oExternalValue = oControl.getProperty("value");
+                    
+                    if (!oExternalValue || oExternalValue === "") {
+                        this._isValid = false;
+                        var oMessage = "Please fill this mandatory field!";
+                        oControl.setValueState(ValueState.Error, oMessage);
+                        
+                        sap.ui.getCore().getMessageManager().addMessages(
+                            new Message({
+                                message: oMessage,
+                                type: MessageType.Error,
+                                target : ( oControlBinding.getContext() ? oControlBinding.getContext().getPath() + "/" : "") +
+                                oControlBinding.getPath(),
+                                processor: oControl.getBinding(aValidateProperties[i]).getModel()
+                            })
+                        );
+                    } else if (oControl.getAggregation("picker") 
+                            && oControl.getProperty("selectedKey").length === 0 ) { // might be a select 
+                        this._isValid = false;
+                        //TODO: i18n this
+                        oControl.setValueState(ValueState.Error, "Please choose an entry!");
+                    } else {
+                        oControl.setValueState(ValueState.None);
+                    }
+                } catch (ex) {
+                    // Validation failed
                 }
             }
 
